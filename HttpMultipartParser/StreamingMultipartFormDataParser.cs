@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -628,6 +628,8 @@ namespace HttpMultipartParser
             }
 
             // If we're here we've hit the boundary and have the data!
+            if (!parameters.ContainsKey("name"))
+                parameters.Add("name", parameters["content-id"].Trim(new char[]{ '<', '>' }));
             var part = new ParameterPart(parameters["name"], data.ToString());
             ParameterHandler(part);
         }
@@ -705,7 +707,7 @@ namespace HttpMultipartParser
 
             // Now that we've consumed all the parameters we're up to the body. We're going to do
             // different things depending on if we're parsing a, relatively small, form value or a
-            // potentially large file.
+            // potentially large file.           
             if (parameters.ContainsKey("filename"))
             {
                 // Right now we assume that if a section contains filename then it is a file.
