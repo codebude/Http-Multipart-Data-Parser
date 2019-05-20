@@ -1,4 +1,4 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="SubsequenceFinder.cs" company="Jake Woods">
 //   Copyright (c) 2013 Jake Woods
 //   
@@ -37,6 +37,12 @@ namespace HttpMultipartParser
     {
         #region Public Methods and Operators
 
+        /// <summary>
+        /// Searches in byteArray
+        /// </summary>
+        /// <param name="haystack"></param>
+        /// <param name="needle"></param>
+        /// <returns></returns>
         public static int Search(byte[] haystack, byte[] needle)
         {
             return Search(haystack, needle, haystack.Length);

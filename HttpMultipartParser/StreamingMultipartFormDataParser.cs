@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -257,6 +257,9 @@ namespace HttpMultipartParser
         public delegate void FileStreamDelegate(
             string name, string fileName, string contentType, string contentDisposition, byte[] buffer, int bytes);
 
+        /// <summary>
+        /// Delegate to close stream
+        /// </summary>
         public delegate void StreamClosedDelegate();
 
         /// <summary>
