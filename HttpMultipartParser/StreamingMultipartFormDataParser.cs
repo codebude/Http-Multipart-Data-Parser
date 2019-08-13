@@ -98,8 +98,8 @@ namespace HttpMultipartParser
         /// <param name="stream">
         ///     The stream containing the multipart data
         /// </param>
-        public StreamingMultipartFormDataParser(Stream stream)
-            : this(stream, null, Encoding.UTF8, DefaultBufferSize)
+        public StreamingMultipartFormDataParser(Stream stream, bool forceByteMode)
+            : this(stream, null, Encoding.UTF8, DefaultBufferSize, forceByteMode)
         {
         }
 
@@ -114,8 +114,8 @@ namespace HttpMultipartParser
         ///     The multipart/form-data boundary. This should be the value
         ///     returned by the request header.
         /// </param>
-        public StreamingMultipartFormDataParser(Stream stream, string boundary)
-            : this(stream, boundary, Encoding.UTF8, DefaultBufferSize)
+        public StreamingMultipartFormDataParser(Stream stream, string boundary, bool forceByteMode)
+            : this(stream, boundary, Encoding.UTF8, DefaultBufferSize, forceByteMode)
         {
         }
 
@@ -130,8 +130,8 @@ namespace HttpMultipartParser
         /// <param name="encoding">
         ///     The encoding of the multipart data
         /// </param>
-        public StreamingMultipartFormDataParser(Stream stream, Encoding encoding)
-            : this(stream, null, encoding, DefaultBufferSize)
+        public StreamingMultipartFormDataParser(Stream stream, Encoding encoding, bool forceByteMode)
+            : this(stream, null, encoding, DefaultBufferSize, forceByteMode)
         {
         }
 
@@ -149,8 +149,8 @@ namespace HttpMultipartParser
         /// <param name="encoding">
         ///     The encoding of the multipart data
         /// </param>
-        public StreamingMultipartFormDataParser(Stream stream, string boundary, Encoding encoding)
-            : this(stream, boundary, encoding, DefaultBufferSize)
+        public StreamingMultipartFormDataParser(Stream stream, string boundary, Encoding encoding, bool forceByteMode)
+            : this(stream, boundary, encoding, DefaultBufferSize, forceByteMode)
         {
             // 4096 is the optimal buffer size as it matches the internal buffer of a StreamReader
             // See: http://stackoverflow.com/a/129318/203133
@@ -172,8 +172,8 @@ namespace HttpMultipartParser
         ///     The size of the buffer to use for parsing the multipart form data. This must be larger
         ///     then (size of boundary + 4 + # bytes in newline).
         /// </param>
-        public StreamingMultipartFormDataParser(Stream stream, Encoding encoding, int binaryBufferSize)
-            : this(stream, null, encoding, binaryBufferSize)
+        public StreamingMultipartFormDataParser(Stream stream, Encoding encoding, int binaryBufferSize, bool forceByteMode)
+            : this(stream, null, encoding, binaryBufferSize, forceByteMode)
         {
         }
 
@@ -195,8 +195,9 @@ namespace HttpMultipartParser
         ///     The size of the buffer to use for parsing the multipart form data. This must be larger
         ///     then (size of boundary + 4 + # bytes in newline).
         /// </param>
-        public StreamingMultipartFormDataParser(Stream stream, string boundary, Encoding encoding, int binaryBufferSize)
+        public StreamingMultipartFormDataParser(Stream stream, string boundary, Encoding encoding, int binaryBufferSize, bool forceByteMode)
         {
+            this.ForceByteMode = forceByteMode;
             if(stream == null || stream == Stream.Null) { throw new ArgumentNullException("stream"); }
             if(encoding == null) { throw new ArgumentNullException("encoding"); }
 
@@ -277,6 +278,11 @@ namespace HttpMultipartParser
         ///     Gets the encoding.
         /// </summary>
         public Encoding Encoding { get; private set; }
+
+        /// <summary>
+        ///     Forces bytemode
+        /// </summary>
+        public bool ForceByteMode { get; private set; }
 
         /// <summary>
         /// The FileHandler. Delegates attached to this property will recieve sequential file stream data from this parser.
@@ -705,6 +711,7 @@ namespace HttpMultipartParser
                 line = reader.ReadLine();
             }
 
+            /*
             // Now that we've consumed all the parameters we're up to the body. We're going to do
             // different things depending on if we're parsing a, relatively small, form value or a
             // potentially large file.           
@@ -714,11 +721,33 @@ namespace HttpMultipartParser
                 // This assumption needs to be checked, it holds true in firefox but is untested for other 
                 // browsers.
                 ParseFilePart(parameters, reader);
+            }            
+            else
+            {
+            */
+            
+            //Try parsing as file anyway
+            if (ForceByteMode)
+            {
+                try
+                {
+                    if (!parameters.ContainsKey("name"))
+                        parameters.Add("name", parameters["content-id"].Trim(new char[] { '<', '>' }));
+                    if (!parameters.ContainsKey("filename"))
+                    {
+                        parameters.Add("filename", parameters["content-id"].Trim(new char[] { '<', '>' }));
+                    }
+                    ParseFilePart(parameters, reader);
+                }
+                catch { }
             }
             else
             {
+                //For SAP PI Multipart we assume that every payload is string first
                 ParseParameterPart(parameters, reader);
             }
+                   
+            //}
         }
 
         /// <summary>
